@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useHostel } from "@/contexts/HostelContext";
@@ -24,8 +26,15 @@ function AdminShell({ children }: { children: React.ReactNode }) {
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading } = useAuth();
   const { currentHostel, loading: hostelLoading } = useHostel();
+  const router = useRouter();
 
-  if (authLoading || hostelLoading) {
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace("/login");
+    }
+  }, [authLoading, user, router]);
+
+  if (authLoading || hostelLoading || !user) {
     return (
       <div className="flex min-h-[100dvh] items-center justify-center bg-gray-50">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
