@@ -113,6 +113,11 @@ export default function ExpensesPage() {
     e.title.toLowerCase().includes(search.toLowerCase())
   );
 
+  const expenseTotal = useMemo(
+    () => operationalExpenses.reduce((sum, expense) => sum + Number(expense.amount || 0), 0),
+    [operationalExpenses]
+  );
+
   const openAddModal = () => {
     setTitle("");
     setAmount("");
@@ -142,6 +147,21 @@ export default function ExpensesPage() {
             <Plus className="h-4 w-4" />
             <span>Add Expense</span>
           </button>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="flex h-full flex-col rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-red-700">
+              Total expenses
+            </span>
+            <p className="mt-1 text-2xl font-bold text-red-800">
+              {formatCurrency(expenseTotal, currentHostel?.currency)}
+            </p>
+            <p className="mt-auto pt-1 text-xs text-red-700/80">
+              {formatMonth(`${expenseRecordsMonth}-01`)} · {operationalExpenses.length} record
+              {operationalExpenses.length === 1 ? "" : "s"}
+            </p>
+          </div>
         </div>
 
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
