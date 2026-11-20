@@ -38,3 +38,6 @@ next-env.d.ts
 
 # supabase
 supabase/.temp
+
+# live database backups (contains student data)
+/backups/
