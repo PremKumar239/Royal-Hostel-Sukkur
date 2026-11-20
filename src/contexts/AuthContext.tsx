@@ -12,6 +12,8 @@ import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import type { Profile } from "@/types/database";
 
+const TAB_AUTH_KEY = "royal_hostel_tab_auth";
+
 interface AuthContextType {
   user: User | null;
   profile: Profile | null;
@@ -21,6 +23,16 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+function hasTabAuth(): boolean {
+  return typeof window !== "undefined" && sessionStorage.getItem(TAB_AUTH_KEY) === "1";
+}
+
+function setTabAuth(on: boolean) {
+  if (typeof window === "undefined") return;
+  if (on) sessionStorage.setItem(TAB_AUTH_KEY, "1");
+  else sessionStorage.removeItem(TAB_AUTH_KEY);
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -42,9 +54,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const init = async () => {
+      if (!hasTabAuth()) {
+        await supabase.auth.signOut({ scope: "local" });
+        setUser(null);
+        setProfile(null);
+        setLoading(false);
+        return;
+      }
+
       const {
-        data: { user: currentUser },
-      } = await supabase.auth.getUser();
+        data: { session },
+      } = await supabase.auth.getSession();
+      const currentUser = session?.user ?? null;
       setUser(currentUser);
       if (currentUser) await fetchProfile(currentUser.id);
       setLoading(false);
@@ -53,11 +74,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setUser(session?.user ?? null);
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!hasTabAuth()) {
+        setUser(null);
+        setProfile(null);
+        return;
+      }
+
       if (session?.user) {
+        setUser(session.user);
         await fetchProfile(session.user.id);
-      } else {
+        return;
+      }
+
+      if (event === "SIGNED_OUT") {
+        setTabAuth(false);
+        setUser(null);
         setProfile(null);
       }
     });
@@ -67,10 +99,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (!error) setTabAuth(true);
     return { error: error?.message ?? null };
   };
 
   const signOut = async () => {
+    setTabAuth(false);
     await supabase.auth.signOut();
     setUser(null);
     setProfile(null);
