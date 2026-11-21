@@ -150,7 +150,7 @@ export default function LedgerPage() {
           <div>
             <h2 className="text-sm font-bold text-gray-900">People Ledger</h2>
             <p className="text-xs text-gray-400 mt-0.5">
-              Shared for both hostels — pay Ameet Lalwani, Khairpur Home, or Sain Amjad
+              Shared for both hostels — Ameet Lalwani and Khairpur Home (Sain Amjad has its own section)
             </p>
           </div>
           <MonthPicker
@@ -185,7 +185,7 @@ export default function LedgerPage() {
             <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
             {PAYOUT_RECIPIENTS.map((recipient) => {
               const recipientPayments = paymentsByRecipient.get(recipient) ?? [];
               const recipientTotal = recipientPayments.reduce(

@@ -253,6 +253,18 @@ export interface OutsideMessPayment {
   created_at: string;
 }
 
+export type SainAmjadEntryType = "add" | "remove";
+
+export interface SainAmjadEntry {
+  id: string;
+  entry_type: SainAmjadEntryType;
+  amount: number;
+  entry_date: string;
+  notes: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
 export interface DashboardStats {
   total_students: number;
   active_students: number;

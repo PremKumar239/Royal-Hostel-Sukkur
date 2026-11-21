@@ -16,7 +16,13 @@ export function isMessExpenseRecord(expense: ExpenseLike): boolean {
   );
 }
 
+export function isSainAmjadExpenseRecord(expense: ExpenseLike): boolean {
+  const vendor = expense.vendor ?? "";
+  return vendor === "Sain Amjad" || expense.title.toLowerCase().includes("sain amjad");
+}
+
 export function isLedgerExpenseRecord(expense: ExpenseLike): boolean {
+  if (isSainAmjadExpenseRecord(expense)) return true;
   return (
     isPayoutRecipient(expense.vendor) ||
     expense.title.startsWith("Payment —")

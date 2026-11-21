@@ -20,6 +20,7 @@ import {
   Bus,
   UtensilsCrossed,
   GraduationCap,
+  Handshake,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useHostel } from "@/contexts/HostelContext";
@@ -37,6 +38,7 @@ const navItems = [
   { href: "/admission-fees", label: "Admission Fees", icon: GraduationCap },
   { href: "/van", label: "Van", icon: Bus },
   { href: "/ledger", label: "Ledger", icon: BookOpen },
+  { href: "/sain-amjad", label: "Sain Amjad", icon: Handshake },
   { href: "/profit", label: "Profit Dashboard", icon: TrendingUp },
 ];
 

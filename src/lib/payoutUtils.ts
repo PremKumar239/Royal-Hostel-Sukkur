@@ -3,7 +3,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 export const PAYOUT_RECIPIENTS = [
   "Ameet Lalwani",
   "Khairpur Home",
-  "Sain Amjad",
 ] as const;
 
 export type PayoutRecipient = (typeof PAYOUT_RECIPIENTS)[number];
