@@ -184,16 +184,6 @@ export default function SainAmjadPage() {
       return;
     }
 
-    const alreadySpent = (spendByEntry.get(entry.id) ?? []).reduce(
-      (sum, line) => sum + Number(line.amount || 0),
-      0
-    );
-    const remaining = Number(entry.amount) - alreadySpent;
-    if (value > remaining + 0.009) {
-      alert(`Only ${formatCurrency(remaining, "PKR")} is left on this add entry.`);
-      return;
-    }
-
     setSpendSaving(true);
     const { data: userData } = await supabase.auth.getUser();
     const { error } = await supabase.from("sain_amjad_spend_lines").insert([
@@ -345,8 +335,16 @@ export default function SainAmjadPage() {
                         {row.notes?.trim() ? row.notes : isAdd ? "Click to add spend lines" : "—"}
                       </p>
                       {isAdd && (
-                        <p className="mt-1 text-xs text-gray-500">
-                          Remaining {formatCurrency(remaining, "PKR")} · {lines.length} spend line
+                        <p
+                          className={`mt-1 text-xs ${
+                            remaining < 0 ? "font-semibold text-red-600" : "text-gray-500"
+                          }`}
+                        >
+                          Remaining{" "}
+                          {remaining < 0
+                            ? `−${formatCurrency(Math.abs(remaining), "PKR")}`
+                            : formatCurrency(remaining, "PKR")}{" "}
+                          · {lines.length} spend line
                           {lines.length === 1 ? "" : "s"}
                         </p>
                       )}
@@ -445,7 +443,7 @@ export default function SainAmjadPage() {
                         />
                         <button
                           type="submit"
-                          disabled={spendSaving || remaining <= 0}
+                          disabled={spendSaving}
                           className="inline-flex items-center justify-center gap-1 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
                         >
                           {spendSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save line"}
