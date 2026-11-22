@@ -16,12 +16,14 @@ import {
   currentYearMonth,
   yearMonthDateRange,
 } from "@/lib/utils";
-import type { Expense } from "@/types/database";
+import { computeFeesAndInvoicesCollectedIncome } from "@/lib/feesIncomeUtils";
+import type { Expense, FeeRecord, Student } from "@/types/database";
 import { Search, Plus, X, Calendar, DollarSign, Receipt, Trash2, Loader2 } from "lucide-react";
 
 export default function ExpensesPage() {
   const { currentHostel } = useHostel();
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [feesIncome, setFeesIncome] = useState(0);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showLogModal, setShowLogModal] = useState(false);
@@ -40,17 +42,38 @@ export default function ExpensesPage() {
     if (!currentHostel) return;
     setLoading(true);
 
-    const { data } = await supabase
-      .from("expenses")
-      .select("*")
-      .eq("hostel_id", currentHostel.id)
-      .gte("expense_date", expenseRecordsRange.start)
-      .lte("expense_date", expenseRecordsRange.end)
-      .order("expense_date", { ascending: false });
+    const billingMonthDate = `${expenseRecordsMonth}-01`;
+    const [{ data }, { data: studentsData }, { data: feesData }] = await Promise.all([
+      supabase
+        .from("expenses")
+        .select("*")
+        .eq("hostel_id", currentHostel.id)
+        .gte("expense_date", expenseRecordsRange.start)
+        .lte("expense_date", expenseRecordsRange.end)
+        .order("expense_date", { ascending: false }),
+      supabase.from("students").select("*").eq("hostel_id", currentHostel.id).eq("status", "active"),
+      supabase
+        .from("fee_records")
+        .select("*")
+        .eq("hostel_id", currentHostel.id)
+        .eq("billing_month", billingMonthDate),
+    ]);
 
     if (data) setExpenses(data as Expense[]);
+    setFeesIncome(
+      computeFeesAndInvoicesCollectedIncome(
+        (studentsData ?? []) as Student[],
+        (feesData ?? []) as FeeRecord[]
+      )
+    );
     setLoading(false);
-  }, [currentHostel, expenseRecordsRange.end, expenseRecordsRange.start, supabase]);
+  }, [
+    currentHostel,
+    expenseRecordsMonth,
+    expenseRecordsRange.end,
+    expenseRecordsRange.start,
+    supabase,
+  ]);
 
   useEffect(() => {
     fetchData();
@@ -117,6 +140,7 @@ export default function ExpensesPage() {
     () => operationalExpenses.reduce((sum, expense) => sum + Number(expense.amount || 0), 0),
     [operationalExpenses]
   );
+  const expenseProfit = feesIncome - expenseTotal;
 
   const openAddModal = () => {
     setTitle("");
@@ -149,7 +173,18 @@ export default function ExpensesPage() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="flex h-full flex-col rounded-xl border border-blue-200 bg-blue-50 p-4 shadow-sm">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700">
+              Income
+            </span>
+            <p className="mt-1 text-2xl font-bold text-blue-900">
+              {formatCurrency(feesIncome, currentHostel?.currency)}
+            </p>
+            <p className="mt-auto pt-1 text-xs text-blue-700/80">
+              Fees amount · {formatMonth(`${expenseRecordsMonth}-01`)}
+            </p>
+          </div>
           <div className="flex h-full flex-col rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm">
             <span className="text-[10px] font-bold uppercase tracking-wider text-red-700">
               Total expenses
@@ -158,8 +193,37 @@ export default function ExpensesPage() {
               {formatCurrency(expenseTotal, currentHostel?.currency)}
             </p>
             <p className="mt-auto pt-1 text-xs text-red-700/80">
-              {formatMonth(`${expenseRecordsMonth}-01`)} · {operationalExpenses.length} record
-              {operationalExpenses.length === 1 ? "" : "s"}
+              {operationalExpenses.length} record
+              {operationalExpenses.length === 1 ? "" : "s"} this month
+            </p>
+          </div>
+          <div
+            className={`flex h-full flex-col rounded-xl border p-4 shadow-sm ${
+              expenseProfit >= 0
+                ? "border-emerald-200 bg-emerald-50"
+                : "border-amber-200 bg-amber-50"
+            }`}
+          >
+            <span
+              className={`text-[10px] font-bold uppercase tracking-wider ${
+                expenseProfit >= 0 ? "text-emerald-700" : "text-amber-800"
+              }`}
+            >
+              Profit
+            </span>
+            <p
+              className={`mt-1 text-2xl font-bold ${
+                expenseProfit >= 0 ? "text-emerald-900" : "text-amber-900"
+              }`}
+            >
+              {formatCurrency(expenseProfit, currentHostel?.currency)}
+            </p>
+            <p
+              className={`mt-auto pt-1 text-xs ${
+                expenseProfit >= 0 ? "text-emerald-700/80" : "text-amber-800/80"
+              }`}
+            >
+              Fees income minus expense records
             </p>
           </div>
         </div>

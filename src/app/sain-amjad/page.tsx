@@ -341,10 +341,12 @@ export default function SainAmjadPage() {
                           }`}
                         >
                           Remaining{" "}
-                          {remaining < 0
-                            ? `−${formatCurrency(Math.abs(remaining), "PKR")}`
-                            : formatCurrency(remaining, "PKR")}{" "}
-                          · {lines.length} spend line
+                          <span className={remaining < 0 ? "text-red-700" : undefined}>
+                            {remaining < 0 ? "-" : ""}
+                            {formatCurrency(Math.abs(remaining), "PKR")}
+                          </span>
+                          {" · "}
+                          {lines.length} spend line
                           {lines.length === 1 ? "" : "s"}
                         </p>
                       )}
@@ -371,9 +373,19 @@ export default function SainAmjadPage() {
 
                   {isAdd && isOpen && (
                     <div className="border-t border-gray-100 bg-gray-50/60 px-4 py-4 sm:px-5">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">
-                        Where this money was spent
-                      </p>
+                      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                          Where this money was spent
+                        </p>
+                        <p
+                          className={`text-sm font-semibold ${
+                            remaining < 0 ? "text-red-700" : "text-gray-700"
+                          }`}
+                        >
+                          Remaining {remaining < 0 ? "-" : ""}
+                          {formatCurrency(Math.abs(remaining), "PKR")}
+                        </p>
+                      </div>
 
                       {lines.length === 0 ? (
                         <p className="text-sm text-gray-400 mb-4">No spend lines yet</p>
