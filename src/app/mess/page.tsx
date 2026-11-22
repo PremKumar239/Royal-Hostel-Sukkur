@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Header } from "@/components/layout/Header";
 import { MonthPicker } from "@/components/ui/MonthPicker";
@@ -19,6 +19,7 @@ import {
   DollarSign,
   Loader2,
   Plus,
+  Search,
   Trash2,
   UtensilsCrossed,
   X,
@@ -39,6 +40,7 @@ export default function MessPage() {
   const [dailyMessAmount, setDailyMessAmount] = useState<number | "">("");
   const [dailyMessDate, setDailyMessDate] = useState(new Date().toISOString().split("T")[0]);
   const [dailyMessDescription, setDailyMessDescription] = useState("");
+  const [search, setSearch] = useState("");
 
   const supabase = createClient();
   const billingMonthDate = `${billingMonth}-01`;
@@ -109,6 +111,17 @@ export default function MessPage() {
       alert(error);
     }
   };
+
+  const filteredMessExpenses = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return messExpenses;
+    return messExpenses.filter((item) => {
+      const description = (item.description || "Daily Mess Expense").toLowerCase();
+      const date = formatDate(item.expense_date).toLowerCase();
+      const amount = String(item.amount ?? "");
+      return description.includes(q) || date.includes(q) || amount.includes(q);
+    });
+  }, [messExpenses, search]);
 
   const handleDeleteMessExpense = async (item: MessExpense) => {
     if (!confirm("Delete this mess expense record?")) return;
@@ -187,6 +200,19 @@ export default function MessPage() {
           </div>
         </div>
 
+        <div className="toolbar-controls w-full min-w-0">
+          <div className="toolbar-search">
+            <Search className="absolute left-3 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search mess expenses by description, date, or amount..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-700 focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-100"
+            />
+          </div>
+        </div>
+
         {loading ? (
           <div className="flex h-32 items-center justify-center">
             <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
@@ -195,6 +221,10 @@ export default function MessPage() {
           <div className="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center">
             <UtensilsCrossed className="mx-auto h-7 w-7 text-gray-300 mb-2" />
             <p className="text-sm font-medium text-gray-500">No mess expenses for this month</p>
+          </div>
+        ) : filteredMessExpenses.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center">
+            <p className="text-sm font-medium text-gray-500">No mess expenses match your search</p>
           </div>
         ) : (
           <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
@@ -209,7 +239,7 @@ export default function MessPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {messExpenses.map((item) => (
+                  {filteredMessExpenses.map((item) => (
                     <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
                       <td className="px-6 py-4 text-gray-600">{formatDate(item.expense_date)}</td>
                       <td className="px-6 py-4 text-gray-700">{item.description || "Daily Mess Expense"}</td>

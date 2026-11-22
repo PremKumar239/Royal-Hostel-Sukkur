@@ -265,6 +265,16 @@ export interface SainAmjadEntry {
   created_at: string;
 }
 
+export interface SainAmjadSpendLine {
+  id: string;
+  entry_id: string;
+  description: string;
+  amount: number;
+  spend_date: string;
+  created_by: string | null;
+  created_at: string;
+}
+
 export interface DashboardStats {
   total_students: number;
   active_students: number;
